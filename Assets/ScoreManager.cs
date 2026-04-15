@@ -13,7 +13,7 @@ public class TennisScoreManager : MonoBehaviour
         public int aGames, bGames;
         public int aSets, bSets;
         public List<string> setHistory;
-
+        
         public GameState(int aPoint, int bPoint, bool advA, bool advB, int aGames, int bGames, int aSets, int bSets, List<string> setHistory)
         {
             this.aPoint = aPoint;
@@ -38,6 +38,7 @@ public class TennisScoreManager : MonoBehaviour
     public TextMeshProUGUI teamBSetsText;
     public GameObject mainPanel;
     public GameObject scoreboardPanel;
+    public GameObject gameMode;
     public TextMeshProUGUI scoreboardText;
 
     // Points
@@ -67,6 +68,7 @@ public class TennisScoreManager : MonoBehaviour
     private float lastPressTime = 0f;
     private bool waitingForPresses = false;
 
+    public TextMeshProUGUI gameModeButtonText;
 void Update()
 {
 #if UNITY_EDITOR
@@ -119,11 +121,50 @@ void Update()
         waitingForPresses = false;
     }
 
+    bool noAdMode = false;
+
+       public void ToggleGameMode()
+{
+    noAdMode = !noAdMode;
+
+    // Reset advantage states (important to avoid weird states)
+    advA = false;
+    advB = false;
+
+    // Update button label
+    if (noAdMode)
+    {
+        gameModeButtonText.text = "Game Mode: NORMAL";
+    }
+    else
+    {
+        gameModeButtonText.text = "Game Mode: AD";
+    }
+
+    UpdateUI();
+}
+
     void AddPoint(bool isA)
     {
         SaveState();
 
-        // Deuce logic
+        // NO-AD MODE
+        if (noAdMode)
+        {
+            if (isA)
+            {
+                if (aPoint < 3) aPoint++;
+                else WinGame(true);
+            }
+            else
+            {
+                if (bPoint < 3) bPoint++;
+                else WinGame(false);
+            }
+        }
+        else
+        {
+        // EXISTING ADVANTAGE MODE
         if (aPoint == 3 && bPoint == 3)
         {
             if (isA)
@@ -152,11 +193,12 @@ void Update()
                 else WinGame(false);
             }
         }
-
-        UpdateUI();
     }
 
-    void WinGame(bool isA)
+    UpdateUI();
+}
+
+     void WinGame(bool isA)
     {
         if (isA) aGames++; else bGames++;
 
